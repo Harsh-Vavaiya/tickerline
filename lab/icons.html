@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tickerline icon directions</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 26px; background: #0c0d0f; color: #e9eaec;
+      font: 13px/1.5 -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { font-size: 18px; margin: 0 0 2px; letter-spacing: -0.01em; }
+    p.lede { margin: 0 0 20px; color: #9aa0a6; max-width: 70ch; }
+    .row { display: flex; gap: 18px; flex-wrap: wrap; }
+    figure { margin: 0 0 22px; background: #141619; border: 1px solid #23262a; border-radius: 12px; padding: 14px; width: 268px; }
+    .big { width: 128px; height: 128px; display: block; border-radius: 10px; }
+    .sizes { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+    .chip { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 7px; }
+    .light { background: #f1f3f4; }
+    .dark { background: #202124; }
+    figcaption { margin-top: 10px; font-weight: 600; }
+    .note { color: #9aa0a6; font-weight: 400; font-size: 12px; margin-top: 2px; }
+    .label { color: #6f757a; font-size: 11px; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+    h2 { font-size: 14px; margin: 26px 0 10px; color: #cdd2d6; }
+    .grid-mock { display: flex; gap: 10px; background: #fff; padding: 14px; border-radius: 10px; }
+    .tile { width: 112px; text-align: center; color: #202124; font-size: 11px; }
+    .tile canvas { border-radius: 10px; }
+    .tile .t { margin-top: 5px; font-weight: 600; font-size: 12px; }
+    .tile .s { color: #5f6368; }
+  </style>
+</head>
+<body>
+  <h1>Tickerline icon directions</h1>
+  <p class="lede">Each one rendered at the sizes that matter. 16px on both a light and a dark toolbar is the real test — that is where people actually see it. The Web Store grid mock at the bottom is the other one.</p>
+  <div class="row" id="row"></div>
+
+  <h2>Web Store grid, against the kind of neighbours it would sit next to</h2>
+  <div class="grid-mock" id="grid"></div>
+
+  <script>
+    const INK = '#0B0B0D';
+    const ACCENT = '#0A84FF';
+    const PAPER = '#F5F5F7';
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+      r = Math.min(r, w / 2, h / 2);
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function ground(ctx, s, fill) {
+      ctx.fillStyle = fill || INK;
+      roundRect(ctx, 0, 0, s, s, s * 0.22);
+      ctx.fill();
+    }
+
+    // Every design takes the canvas size so it scales honestly rather than being
+    // drawn big and downsampled, which is how detail sneaks in that dies at 16px.
+    const DESIGNS = [
+      {
+        id: 'lowerthird',
+        name: 'Lower third',
+        note: 'The strip itself, where it actually sits. One shape.',
+        draw(ctx, s) {
+          ground(ctx, s);
+          ctx.fillStyle = ACCENT;
+          ctx.fillRect(0, s * 0.60, s, s * 0.22);
+        },
+      },
+      {
+        id: 'pill',
+        name: 'Pill tag',
+        note: 'Matches the default Keynote look. Floating label.',
+        draw(ctx, s) {
+          ground(ctx, s);
+          ctx.fillStyle = ACCENT;
+          const h = s * 0.24, y = s * 0.56, x = s * 0.12, w = s * 0.76;
+          roundRect(ctx, x, y, w, h, h / 2);
+          ctx.fill();
+        },
+      },
+      {
+        id: 'livedot',
+        name: 'Live dot',
+        note: 'Broadcast cue. The dot reads even when the bar does not.',
+        draw(ctx, s) {
+          ground(ctx, s);
+          ctx.fillStyle = ACCENT;
+          ctx.fillRect(0, s * 0.62, s, s * 0.20);
+          ctx.fillStyle = '#FF453A';
+          ctx.beginPath();
+          ctx.arc(s * 0.30, s * 0.36, s * 0.11, 0, Math.PI * 2);
+          ctx.fill();
+        },
+      },
+      {
+        id: 'twobar',
+        name: 'Two bars',
+        note: 'Literally the product: top strip and bottom ticker.',
+        draw(ctx, s) {
+          ground(ctx, s);
+          ctx.fillStyle = ACCENT;
+          ctx.fillRect(0, s * 0.18, s, s * 0.16);
+          ctx.fillRect(0, s * 0.66, s, s * 0.16);
+        },
+      },
+      {
+        id: 'monogram',
+        name: 'T monogram',
+        note: 'Ties to the name. Risks reading as a generic letterform.',
+        draw(ctx, s) {
+          ground(ctx, s);
+          ctx.fillStyle = ACCENT;
+          ctx.fillRect(s * 0.16, s * 0.24, s * 0.68, s * 0.16);
+          ctx.fillRect(s * 0.42, s * 0.24, s * 0.16, s * 0.52);
+        },
+      },
+      {
+        id: 'inverted',
+        name: 'Inverted',
+        note: 'Light ground. Stands out in a row of dark icons.',
+        draw(ctx, s) {
+          ground(ctx, s, PAPER);
+          ctx.fillStyle = INK;
+          const h = s * 0.24, y = s * 0.56, x = s * 0.12, w = s * 0.76;
+          roundRect(ctx, x, y, w, h, h / 2);
+          ctx.fill();
+          ctx.fillStyle = ACCENT;
+          ctx.beginPath();
+          ctx.arc(s * 0.26, s * 0.68, s * 0.055, 0, Math.PI * 2);
+          ctx.fill();
+        },
+      },
+    ];
+
+    function render(design, size) {
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      c.style.width = size + 'px';
+      c.style.height = size + 'px';
+      design.draw(c.getContext('2d'), size);
+      return c;
+    }
+
+    const row = document.getElementById('row');
+    for (const d of DESIGNS) {
+      const fig = document.createElement('figure');
+      const big = render(d, 128);
+      big.className = 'big';
+
+      const sizes = document.createElement('div');
+      sizes.className = 'sizes';
+      sizes.append(render(d, 48));
+      const light = document.createElement('span');
+      light.className = 'chip light';
+      light.append(render(d, 16));
+      const dark = document.createElement('span');
+      dark.className = 'chip dark';
+      dark.append(render(d, 16));
+      sizes.append(light, dark);
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = '48px · 16px on light · 16px on dark';
+
+      const cap = document.createElement('figcaption');
+      cap.innerHTML = `${d.name}<div class="note">${d.note}</div>`;
+      fig.append(big, sizes, label, cap);
+      row.appendChild(fig);
+    }
+
+    // What it looks like next to the sort of thing it competes with.
+    const NEIGHBOURS = [
+      { t: 'Meet Enhancer', s: '4.2 ★ (1,204)', draw(ctx, s) { ground(ctx, s, '#1a73e8'); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s/2, s*0.42, s*0.16, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(s/2, s*0.96, s*0.26, s*0.3, 0, Math.PI, 0); ctx.fill(); } },
+      { t: 'Virtual Cam', s: '4.0 ★ (812)', draw(ctx, s) { ground(ctx, s, '#2b2f36'); ctx.fillStyle = '#9aa0a6'; roundRect(ctx, s*0.18, s*0.3, s*0.5, s*0.4, s*0.08); ctx.fill(); ctx.beginPath(); ctx.moveTo(s*0.72, s*0.4); ctx.lineTo(s*0.86, s*0.32); ctx.lineTo(s*0.86, s*0.68); ctx.lineTo(s*0.72, s*0.6); ctx.fill(); } },
+      { t: 'NameTag for Meet', s: '3.8 ★ (233)', draw(ctx, s) { ground(ctx, s, '#34a853'); ctx.fillStyle = '#fff'; roundRect(ctx, s*0.2, s*0.36, s*0.6, s*0.28, s*0.06); ctx.fill(); } },
+    ];
+
+    const grid = document.getElementById('grid');
+    function tile(def, name, sub) {
+      const el = document.createElement('div');
+      el.className = 'tile';
+      const c = document.createElement('canvas');
+      c.width = 96; c.height = 96;
+      c.style.width = '96px'; c.style.height = '96px';
+      def(c.getContext('2d'), 96);
+      el.append(c);
+      el.insertAdjacentHTML('beforeend', `<div class="t">${name}</div><div class="s">${sub}</div>`);
+      return el;
+    }
+    grid.append(tile(DESIGNS[0].draw, 'Tickerline', 'the one we would ship'));
+    for (const n of NEIGHBOURS) grid.append(tile(n.draw, n.t, n.s));
+    grid.append(tile((ctx, s) => {
+      // the current icon, for comparison
+      ground(ctx, s, '#2b3036');
+      ctx.fillStyle = '#9aa0a6';
+      ctx.beginPath(); ctx.arc(s/2, s*0.38, s*0.15, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(s/2, s*0.92, s*0.24, s*0.3, 0, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = '#4A7B03'; ctx.fillRect(0, s*0.72, s, s*0.2);
+      ctx.fillStyle = '#fff'; ctx.fillRect(s*0.26, s*0.80, s*0.48, s*0.035);
+    }, 'Tickerline', 'today'));
+  </script>
+</body>
+</html>

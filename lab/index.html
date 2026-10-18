@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tickerline Lab</title>
+  <style>
+    :root {
+      --bg: #f6f7f8; --panel: #ffffff; --fg: #1d1f20; --muted: #676d72; --line: #e2e4e6; --field: #f3f4f5;
+      --accent: #4a7b03; --accent-soft: #eaf3de; --warn: #8a4b08; --warn-soft: #faeeda;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #141617; --panel: #1c1e20; --fg: #eceeef; --muted: #9aa0a5; --line: #2e3235; --field: #25282b; --accent: #8cc63f; --accent-soft: #24310f; --warn: #f2c27a; --warn-soft: #3a2a10; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.5 "Segoe UI", Roboto, system-ui, sans-serif; }
+    header { padding: 18px 24px 6px; }
+    h1 { margin: 0; font-size: 19px; font-weight: 600; }
+    header p { margin: 4px 0 0; color: var(--muted); max-width: 820px; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; padding: 14px 24px 28px; align-items: start; }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+    .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+    canvas#out { width: 100%; height: auto; display: block; border-radius: 8px; background: #2b3036; aspect-ratio: 16 / 9; }
+    .stage .under { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .stat { background: var(--field); border-radius: 8px; padding: 8px 10px; }
+    .stat b { display: block; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .status { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+    .status.warn { background: var(--warn-soft); color: var(--warn); }
+    aside { display: grid; gap: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+    .card h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+    .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .modes label { position: relative; }
+    .modes input { position: absolute; opacity: 0; }
+    .modes span { display: block; text-align: center; padding: 7px 4px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; font-size: 12.5px; background: var(--field); }
+    .modes input:checked + span { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+    .modes input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; }
+    .row label { color: var(--muted); font-size: 12.5px; }
+    .check { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 13px; }
+    .check.disabled { opacity: .45; }
+    input[type=range] { width: 140px; accent-color: var(--accent); }
+    input[type=checkbox] { accent-color: var(--accent); }
+    input[type=text], textarea { width: 100%; padding: 6px 8px; border: 1px solid var(--line); background: var(--field); color: var(--fg); border-radius: 6px; font: inherit; font-size: 13px; }
+    textarea { min-height: 58px; resize: vertical; }
+    input[type=color] { width: 34px; height: 24px; border: 1px solid var(--line); border-radius: 6px; padding: 0; background: none; }
+    .field { margin: 6px 0; }
+    .field > span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 3px; }
+    .btn { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--fg); font: inherit; font-size: 12.5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tickerline lab: with and without a model</h1>
+    <p>Same strip, three pipelines. Watch the numbers, wave a hand near the bottom strip, turn sideways, and tick "Simulate Meet's own blur" to see what happens when the platform blurs after us.</p>
+  </header>
+
+  <main>
+    <div class="stage">
+      <canvas id="out" width="1280" height="720" aria-label="Processed camera output"></canvas>
+      <div class="under">
+        <span>Output frame, not mirrored (what others see)</span>
+        <span id="runtime">No model</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="sFps">0</b><span>output fps</span></div>
+        <div class="stat"><b id="sFrame">0</b><span>ms per frame</span></div>
+        <div class="stat"><b id="sModel">–</b><span>model ms</span></div>
+        <div class="stat"><b id="sMask">–</b><span>mask updates/s</span></div>
+      </div>
+      <div class="status" id="status">Starting camera…</div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h2>Pipeline</h2>
+        <div class="modes" role="radiogroup" aria-label="Pipeline">
+          <label><input type="radio" name="mode" value="none" checked /><span>No model</span></label>
+          <label><input type="radio" name="mode" value="seg" /><span>Segmentation</span></label>
+          <label><input type="radio" name="mode" value="depth" /><span>Depth</span></label>
+        </div>
+        <p class="hint" id="modeHint">Strip drawn straight on the camera frame. No ML at all.</p>
+        <label class="check" id="simWrap"><input type="checkbox" id="simulate" /> Simulate Meet's own blur (strip drawn first)</label>
+        <label class="check" id="maskWrap"><input type="checkbox" id="showMask" /> Show person mask</label>
+        <div class="row" id="blurRow"><label for="blur">Background blur</label><input type="range" id="blur" min="4" max="40" value="16" /></div>
+        <div class="row" id="cutRow"><label for="cut">Depth cutoff</label><input type="range" id="cut" min="0.15" max="0.9" step="0.01" value="0.55" /></div>
+        <label class="check"><input type="checkbox" id="guides" /> Crop guides</label>
+      </div>
+
+      <div class="card">
+        <h2>Strip</h2>
+        <div class="row"><label for="color">Strip color</label><input type="color" id="color" value="#4a7b03" /></div>
+        <label class="field"><span>Top text</span><input type="text" id="topText" value="Your Company" /></label>
+        <label class="field"><span>Bottom items, one per line</span><textarea id="segments">Your Name · Your Role
++91 00000 00000
+yourcompany.com</textarea></label>
+        <div class="row">
+          <label>Logo</label>
+          <span><button class="btn" id="pickLogo" type="button">Choose</button> <button class="btn" id="clearLogo" type="button">Clear</button></span>
+          <input type="file" id="logoFile" accept="image/*" hidden />
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <video id="video" playsinline muted hidden></video>
+  <script src="../extension/strip.js"></script>
+  <script type="module">
+    const MP_VER = '1.1.1';
+    const TF_VER = '4.3.1';
+    const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
+    const TF_URL = `https://cdn.jsdelivr.net/npm/@huggingface/transformers@${TF_VER}/dist/transformers.min.js`;
+    const SEG_MODEL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter_landscape/float16/latest/selfie_segmenter_landscape.tflite';
+    const DEPTH_MODEL = 'onnx-community/depth-anything-v2-small';
+
+    const S = window.MeetStrip;
+    const $ = (id) => document.getElementById(id);
+    const video = $('video');
+    const out = $('out');
+    const outCtx = out.getContext('2d');
+
+    const mk = (w = 2, h = 2, opts) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d', opts)]; };
+    const [work, workCtx] = mk();
+    const [small, smallCtx] = mk();
+    const [person, personCtx] = mk();
+    const [tint, tintCtx] = mk();
+    const [segMask, segMaskCtx] = mk();
+    const [depthMask, depthMaskCtx] = mk();
+    const [depthIn, depthInCtx] = mk(2, 2, { willReadFrequently: true });
+
+    const state = { mode: 'none', simulate: false, showMask: false, blur: 16, cut: 0.55, guides: false };
+    let cfg = null;
+    let logo = null;
+
+    // ---------- stats ----------
+    function meter() { return { n: 0, sum: 0, t: performance.now(), last: { rate: 0, avg: 0 } }; }
+    const fm = meter(), mm = meter();
+    function tick(m, ms) {
+      m.n++; if (ms != null) m.sum += ms;
+      const dt = performance.now() - m.t;
+      if (dt >= 1000) { m.last = { rate: (m.n * 1000) / dt, avg: m.n ? m.sum / m.n : 0 }; m.n = 0; m.sum = 0; m.t = performance.now(); return true; }
+      return false;
+    }
+    function showStats() {
+      $('sFps').textContent = fm.last.rate.toFixed(0);
+      $('sFrame').textContent = fm.last.avg.toFixed(1);
+      $('sModel').textContent = state.mode === 'none' || !mm.last.rate ? '–' : mm.last.avg.toFixed(1);
+      $('sMask').textContent = state.mode === 'none' || !mm.last.rate ? '–' : mm.last.rate.toFixed(0);
+    }
+    function status(msg, warn) { const s = $('status'); s.textContent = msg; s.classList.toggle('warn', !!warn); }
+
+    // ---------- strip config ----------
+    function readCfg() {
+      cfg = S.normalize({
+        enabled: true,
+        color: $('color').value,
+        top: { enabled: true, text: $('topText').value },
+        bottom: { enabled: true, segments: $('segments').value.split('\n'), seconds: 4 },
+      });
+    }
+    readCfg();
+    for (const id of ['color', 'topText', 'segments']) $(id).addEventListener('input', readCfg);
+    $('pickLogo').onclick = () => $('logoFile').click();
+    $('logoFile').onchange = async () => {
+      const f = $('logoFile').files[0];
+      if (!f) return;
+      try { logo = await createImageBitmap(f); } catch {
+        const img = new Image(); img.src = URL.createObjectURL(f); await img.decode(); logo = img;
+      }
+    };
+    $('clearLogo').onclick = () => { logo = null; };
+
+    // ---------- controls ----------
+    const hints = {
+      none: 'Strip drawn straight on the camera frame. No ML at all.',
+      seg: 'MediaPipe selfie segmenter finds you, we blur the rest, then draw the strip last.',
+      depth: 'Depth Anything V2 Small estimates depth, we threshold the nearest pixels as "you", blur the rest, strip last. Runs async, so the mask can lag.',
+    };
+    function syncControls() {
+      const model = state.mode !== 'none';
+      $('modeHint').textContent = hints[state.mode];
+      for (const id of ['simWrap', 'maskWrap']) $(id).classList.toggle('disabled', !model);
+      $('simulate').disabled = !model; $('showMask').disabled = !model; $('blur').disabled = !model;
+      $('cutRow').style.display = state.mode === 'depth' ? '' : 'none';
+      $('blurRow').style.opacity = model ? 1 : 0.45;
+    }
+    document.querySelectorAll('input[name=mode]').forEach((r) => r.addEventListener('change', async () => {
+      state.mode = r.value; syncControls();
+      fm.last = { rate: 0, avg: 0 }; mm.last = { rate: 0, avg: 0 };
+      if (state.mode === 'seg') await ensureSeg();
+      if (state.mode === 'depth') await ensureDepth();
+      updateRuntime();
+    }));
+    $('simulate').onchange = (e) => (state.simulate = e.target.checked);
+    $('showMask').onchange = (e) => (state.showMask = e.target.checked);
+    $('blur').oninput = (e) => (state.blur = +e.target.value);
+    $('cut').oninput = (e) => (state.cut = +e.target.value);
+    $('guides').onchange = (e) => (state.guides = e.target.checked);
+    syncControls();
+
+    // ---------- models ----------
+    let segmenter = null, segLoading = null, segRuntime = '';
+    let depthPipe = null, depthLoading = null, depthRuntime = '', RawImage = null;
+    let segValid = false, depthValid = false, depthBusy = false, lastTs = 0;
+
+    function updateRuntime() {
+      $('runtime').textContent = state.mode === 'seg' ? (segRuntime || 'Loading…') : state.mode === 'depth' ? (depthRuntime || 'Loading…') : 'No model';
+    }
+
+    function ensureSeg() {
+      if (segmenter || segLoading) return segLoading;
+      status('Downloading MediaPipe and the selfie segmenter (a few MB)…');
+      segLoading = (async () => {
+        try {
+          const vision = await import(`${MP_BASE}/vision_bundle.mjs`);
+          const fileset = await vision.FilesetResolver.forVisionTasks(`${MP_BASE}/wasm`);
+          const opts = (delegate) => ({ baseOptions: { modelAssetPath: SEG_MODEL, delegate }, runningMode: 'VIDEO', outputConfidenceMasks: true, outputCategoryMask: false });
+          try {
+            segmenter = await vision.ImageSegmenter.createFromOptions(fileset, opts('GPU'));
+            segRuntime = 'MediaPipe selfie segmenter · GPU';
+          } catch (e) {
+            console.warn('GPU delegate failed, using CPU', e);
+            segmenter = await vision.ImageSegmenter.createFromOptions(fileset, opts('CPU'));
+            segRuntime = 'MediaPipe selfie segmenter · CPU';
+          }
+          status('Segmentation ready.');
+        } catch (e) {
+          console.error(e);
+          status('Could not load MediaPipe: ' + e.message, true);
+        }
+        updateRuntime();
+      })();
+      return segLoading;
+    }
+
+    function ensureDepth() {
+      if (depthPipe || depthLoading) return depthLoading;
+      status('Downloading Transformers.js and Depth Anything V2 Small (25 to 100 MB depending on GPU, cached after first run)…');
+      depthLoading = (async () => {
+        try {
+          const tf = await import(TF_URL);
+          RawImage = tf.RawImage;
+          tf.env.allowLocalModels = false;
+          let device = 'wasm', dtype = 'q8';
+          if (navigator.gpu) {
+            try {
+              const adapter = await navigator.gpu.requestAdapter();
+              if (adapter) { device = 'webgpu'; dtype = adapter.features.has('shader-f16') ? 'fp16' : 'fp32'; }
+            } catch {}
+          }
+          const files = {};
+          depthPipe = await tf.pipeline('depth-estimation', DEPTH_MODEL, {
+            device, dtype,
+            progress_callback: (p) => {
+              if (p.status === 'progress' && p.file && p.total) {
+                files[p.file] = [p.loaded, p.total];
+                const [l, t] = Object.values(files).reduce((a, [x, y]) => [a[0] + x, a[1] + y], [0, 0]);
+                status(`Downloading depth model… ${(l / 1e6).toFixed(0)} / ${(t / 1e6).toFixed(0)} MB`);
+              }
+            },
+          });
+          depthRuntime = `Depth Anything V2 Small · ${device} ${dtype}`;
+          status(device === 'webgpu'
+            ? 'Depth model ready on WebGPU. First few frames are slower while the GPU warms up.'
+            : 'Depth model ready, but WebGPU is not available so it runs on the CPU. Expect it to be slow.', device !== 'webgpu');
+        } catch (e) {
+          console.error(e);
+          status('Could not load the depth model: ' + e.message, true);
+        }
+        updateRuntime();
+      })();
+      return depthLoading;
+    }
+
+    // Write a 0..1 alpha array into a mask canvas (white, alpha = person).
+    function writeMask(canvas, ctx, alphas, w, h) {
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; canvas._img = null; }
+      const img = canvas._img || (canvas._img = ctx.createImageData(w, h));
+      const d = img.data;
+      for (let i = 0, j = 0; i < alphas.length; i++, j += 4) {
+        d[j] = d[j + 1] = d[j + 2] = 255;
+        d[j + 3] = alphas[i] <= 0 ? 0 : alphas[i] >= 1 ? 255 : alphas[i] * 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+
+    function runSeg(input) {
+      let ts = performance.now();
+      if (ts <= lastTs) ts = lastTs + 1;
+      lastTs = ts;
+      const t0 = performance.now();
+      const res = segmenter.segmentForVideo(input, ts);
+      const masks = res.confidenceMasks || [];
+      const p = masks.length > 1 ? masks[1] : masks[0]; // index 1 = person for the selfie models
+      if (p) { writeMask(segMask, segMaskCtx, p.getAsFloat32Array(), p.width, p.height); segValid = true; }
+      res.close();
+      tick(mm, performance.now() - t0);
+    }
+
+    const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    function kickDepth(input, W, H) {
+      if (!depthPipe || depthBusy) return;
+      depthBusy = true;
+      const dw = 384, dh = Math.round((384 * H) / W);
+      const t0 = performance.now();
+      // Grab the frame asynchronously so the pixel readback never stalls the render loop.
+      createImageBitmap(input, { resizeWidth: dw, resizeHeight: dh, resizeQuality: 'low' }).then((bmp) => {
+        if (depthIn.width !== dw || depthIn.height !== dh) { depthIn.width = dw; depthIn.height = dh; }
+        depthInCtx.drawImage(bmp, 0, 0);
+        bmp.close();
+        return depthPipe(RawImage.fromCanvas(depthIn));
+      }).then((res) => {
+        const d = res.depth; // 1-channel RawImage, bigger = nearer
+        const src = d.data;
+        let mn = 255, mx = 0;
+        for (let i = 0; i < src.length; i++) { const v = src[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
+        const span = Math.max(1, mx - mn);
+        const cut = state.cut;
+        const alphas = new Float32Array(src.length);
+        for (let i = 0; i < src.length; i++) alphas[i] = smooth(cut - 0.05, cut + 0.05, (src[i] - mn) / span);
+        writeMask(depthMask, depthMaskCtx, alphas, d.width, d.height);
+        depthValid = true;
+        tick(mm, performance.now() - t0);
+      }).catch((e) => { console.error(e); status('Depth inference failed: ' + e.message, true); })
+        .finally(() => { depthBusy = false; });
+    }
+
+    function composite(input, mask, W, H) {
+      // Blurred background: downscale, blur, upscale. Much cheaper than blurring 720p.
+      const sw = Math.round(W / 4), sh = Math.round(H / 4);
+      if (small.width !== sw || small.height !== sh) { small.width = sw; small.height = sh; }
+      const b = Math.max(1, state.blur / 4);
+      smallCtx.filter = `blur(${b}px)`;
+      smallCtx.drawImage(input, -b * 2, -b * 2, sw + b * 4, sh + b * 4);
+      smallCtx.filter = 'none';
+      outCtx.drawImage(small, 0, 0, W, H);
+      // Sharp person cut out with the (upscaled, naturally soft) mask.
+      personCtx.globalCompositeOperation = 'copy';
+      personCtx.drawImage(input, 0, 0, W, H);
+      personCtx.globalCompositeOperation = 'destination-in';
+      personCtx.drawImage(mask, 0, 0, W, H);
+      personCtx.globalCompositeOperation = 'source-over';
+      outCtx.drawImage(person, 0, 0);
+    }
+
+    function drawMaskOverlay(mask, W, H) {
+      tintCtx.globalCompositeOperation = 'copy';
+      tintCtx.drawImage(mask, 0, 0, W, H);
+      tintCtx.globalCompositeOperation = 'source-in';
+      tintCtx.fillStyle = '#7F77DD';
+      tintCtx.fillRect(0, 0, W, H);
+      tintCtx.globalCompositeOperation = 'source-over';
+      outCtx.globalAlpha = 0.45;
+      outCtx.drawImage(tint, 0, 0);
+      outCtx.globalAlpha = 1;
+    }
+
+    // ---------- render loop ----------
+    function render() {
+      const W = video.videoWidth, H = video.videoHeight;
+      if (!W || !H) return;
+      for (const c of [out, work, person, tint]) if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+      const now = Date.now();
+      const model = state.mode !== 'none';
+      const simulate = model && state.simulate;
+
+      let input = video;
+      if (simulate) {
+        workCtx.drawImage(video, 0, 0, W, H);
+        S.draw(workCtx, W, H, cfg, logo, now);
+        input = work;
+      }
+
+      let mask = null;
+      if (state.mode === 'seg' && segmenter) { runSeg(input); if (segValid) mask = segMask; }
+      if (state.mode === 'depth' && depthPipe) { kickDepth(input, W, H); if (depthValid) mask = depthMask; }
+
+      if (mask) composite(input, mask, W, H);
+      else outCtx.drawImage(input, 0, 0, W, H);
+
+      if (!simulate) S.draw(outCtx, W, H, cfg, logo, now);
+      if (state.showMask && mask) drawMaskOverlay(mask, W, H);
+      if (state.guides) S.drawGuides(outCtx, W, H);
+    }
+
+    function onFrame() {
+      const t0 = performance.now();
+      try { render(); } catch (e) { console.error(e); status('Render error: ' + e.message, true); }
+      if (tick(fm, performance.now() - t0)) showStats();
+      schedule();
+    }
+    const schedule = () => ('requestVideoFrameCallback' in HTMLVideoElement.prototype ? video.requestVideoFrameCallback(onFrame) : requestAnimationFrame(onFrame));
+
+    async function start() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+        video.srcObject = stream;
+        await video.play();
+        status('Camera on. Pick a pipeline on the right.');
+        schedule();
+      } catch (e) {
+        const fileHint = location.protocol === 'file:' ? ' If Chrome blocks the camera on a local file, run "python3 -m http.server 8000" in the tickerline folder and open http://localhost:8000/lab/' : '';
+        status('Camera did not start: ' + e.message + '.' + fileHint, true);
+      }
+    }
+    start();
+  </script>
+</body>
+</html>

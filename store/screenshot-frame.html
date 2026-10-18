@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tickerline — screenshot composer</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 24px; background: #0c0d0f; color: #e9eaec;
+      font: 13px/1.5 -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { font-size: 17px; margin: 0 0 4px; letter-spacing: -0.01em; }
+    p.lede { margin: 0 0 16px; color: #9aa0a6; max-width: 76ch; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    input[type=text] {
+      flex: 1 1 420px; padding: 8px 10px; border: 1px solid #2a2e33; background: #16181b;
+      color: #e9eaec; border-radius: 7px; font: inherit;
+    }
+    select, button, label.file {
+      padding: 8px 12px; border: 1px solid #2a2e33; background: #16181b; color: #e9eaec;
+      border-radius: 7px; font: inherit; cursor: pointer;
+    }
+    button.primary { background: #0A84FF; border-color: #0A84FF; color: #fff; font-weight: 600; }
+    canvas { width: 100%; max-width: 1280px; display: block; border-radius: 8px; border: 1px solid #23262a; }
+    .hint { color: #6f757a; font-size: 12px; margin-top: 10px; }
+    input[type=file] { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Screenshot composer</h1>
+  <p class="lede">
+    Drop in a raw capture and this scales it to exactly 1280&times;800 — the size the store wants, full bleed, square corners —
+    and burns in a caption. Shoot the call at any size; this handles the rest.
+  </p>
+
+  <div class="controls">
+    <label class="file">Choose image…<input type="file" id="file" accept="image/*" /></label>
+    <input type="text" id="caption" value="Your name and details, on every call." />
+    <select id="position">
+      <option value="bottom">Caption bottom</option>
+      <option value="top">Caption top</option>
+      <option value="none">No caption</option>
+    </select>
+    <button class="primary" id="save">Download PNG</button>
+  </div>
+
+  <canvas id="out" width="1280" height="800"></canvas>
+  <p class="hint">Paste from the clipboard works too — just Ctrl+V anywhere on this page.</p>
+
+  <script>
+    const W = 1280, H = 800;
+    const canvas = document.getElementById('out');
+    const ctx = canvas.getContext('2d');
+    let image = null;
+
+    function draw() {
+      ctx.fillStyle = '#0B0B0D';
+      ctx.fillRect(0, 0, W, H);
+
+      if (image) {
+        // cover: fill the frame without distorting, cropping the overflow
+        const scale = Math.max(W / image.width, H / image.height);
+        const w = image.width * scale, h = image.height * scale;
+        ctx.drawImage(image, (W - w) / 2, (H - h) / 2, w, h);
+      } else {
+        ctx.fillStyle = '#16181b';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#4a5056';
+        ctx.font = '600 22px -apple-system, "Segoe UI", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Choose or paste a screenshot', W / 2, H / 2);
+        ctx.textAlign = 'left';
+      }
+
+      const text = document.getElementById('caption').value.trim();
+      const pos = document.getElementById('position').value;
+      if (!text || pos === 'none') return;
+
+      // A scrim behind the caption so it stays readable over any footage.
+      const band = 132;
+      const y = pos === 'bottom' ? H - band : 0;
+      const g = ctx.createLinearGradient(0, pos === 'bottom' ? y : band, 0, pos === 'bottom' ? H : 0);
+      g.addColorStop(0, 'rgba(8,9,11,0)');
+      g.addColorStop(0.45, 'rgba(8,9,11,0.82)');
+      g.addColorStop(1, 'rgba(8,9,11,0.95)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y, W, band);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '600 38px -apple-system, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, W / 2, pos === 'bottom' ? H - band / 2 + 6 : band / 2 - 6);
+
+      // accent rule, tying the shots to the product's own look
+      ctx.fillStyle = '#0A84FF';
+      const rw = 96;
+      ctx.fillRect((W - rw) / 2, pos === 'bottom' ? H - 26 : band - 10, rw, 4);
+    }
+
+    function load(fileOrBlob) {
+      const img = new Image();
+      img.onload = () => { image = img; draw(); };
+      img.src = URL.createObjectURL(fileOrBlob);
+    }
+
+    document.getElementById('file').addEventListener('change', (e) => {
+      if (e.target.files[0]) load(e.target.files[0]);
+    });
+    document.getElementById('caption').addEventListener('input', draw);
+    document.getElementById('position').addEventListener('change', draw);
+    window.addEventListener('paste', (e) => {
+      for (const item of e.clipboardData.items) {
+        if (item.type.startsWith('image/')) load(item.getAsFile());
+      }
+    });
+    document.getElementById('save').addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.download = 'tickerline-screenshot-1280x800.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    });
+
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Icon in context</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; padding: 26px; background: #0c0d0f; color: #e9eaec;
+      font: 13px/1.5 -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+    h1 { font-size: 17px; margin: 0 0 16px; }
+    h2 { font-size: 13px; color: #9aa0a6; margin: 22px 0 8px; font-weight: 500; }
+    img { image-rendering: auto; display: block; }
+    .toolbar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; width: fit-content; }
+    .toolbar.light { background: #f1f3f4; }
+    .toolbar.dark { background: #202124; }
+    .toolbar .dot { width: 16px; height: 16px; border-radius: 50%; }
+    .store { display: flex; gap: 12px; background: #fff; padding: 16px; border-radius: 10px; width: fit-content; }
+    .card { width: 120px; text-align: center; color: #202124; }
+    .card .t { font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .card .s { font-size: 11px; color: #5f6368; }
+    .sizes { display: flex; align-items: flex-end; gap: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Tickerline icon — in context</h1>
+
+  <h2>Actual sizes</h2>
+  <div class="sizes">
+    <img src="../extension/icons/icon128.png" width="128" height="128" alt="128" />
+    <img src="../extension/icons/icon48.png" width="48" height="48" alt="48" />
+    <img src="../extension/icons/icon16.png" width="16" height="16" alt="16" />
+  </div>
+
+  <h2>Browser toolbar, 16px — the size that actually matters</h2>
+  <div class="sizes">
+    <div class="toolbar light">
+      <span class="dot" style="background:#d93025"></span>
+      <span class="dot" style="background:#1a73e8"></span>
+      <img src="../extension/icons/icon16.png" width="16" height="16" alt="light" />
+      <span class="dot" style="background:#188038"></span>
+    </div>
+    <div class="toolbar dark">
+      <span class="dot" style="background:#f28b82"></span>
+      <span class="dot" style="background:#8ab4f8"></span>
+      <img src="../extension/icons/icon16.png" width="16" height="16" alt="dark" />
+      <span class="dot" style="background:#81c995"></span>
+    </div>
+  </div>
+
+  <h2>Web Store grid, against plausible neighbours</h2>
+  <div class="store">
+    <div class="card">
+      <img src="../extension/icons/icon128.png" width="96" height="96" alt="ours" />
+      <div class="t">Tickerline</div><div class="s">new</div>
+    </div>
+    <div class="card">
+      <canvas id="n1" width="96" height="96"></canvas>
+      <div class="t">Meet Enhancer</div><div class="s">4.2 ★ (1,204)</div>
+    </div>
+    <div class="card">
+      <canvas id="n2" width="96" height="96"></canvas>
+      <div class="t">Virtual Cam</div><div class="s">4.0 ★ (812)</div>
+    </div>
+    <div class="card">
+      <canvas id="n3" width="96" height="96"></canvas>
+      <div class="t">NameTag</div><div class="s">3.8 ★ (233)</div>
+    </div>
+    <div class="card">
+      <canvas id="old" width="96" height="96"></canvas>
+      <div class="t">Tickerline</div><div class="s">old</div>
+    </div>
+  </div>
+
+  <script>
+    function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);}
+    const g = id => document.getElementById(id).getContext('2d');
+    let c = g('n1'); c.fillStyle='#1a73e8'; rr(c,0,0,96,96,21); c.fill();
+    c.fillStyle='#fff'; c.beginPath(); c.arc(48,40,15,0,7); c.fill();
+    c.beginPath(); c.ellipse(48,92,25,29,0,Math.PI,0); c.fill();
+    c = g('n2'); c.fillStyle='#2b2f36'; rr(c,0,0,96,96,21); c.fill();
+    c.fillStyle='#9aa0a6'; rr(c,17,29,48,38,7); c.fill();
+    c.beginPath(); c.moveTo(69,38); c.lineTo(83,31); c.lineTo(83,65); c.lineTo(69,58); c.fill();
+    c = g('n3'); c.fillStyle='#34a853'; rr(c,0,0,96,96,21); c.fill();
+    c.fillStyle='#fff'; rr(c,19,35,58,27,6); c.fill();
+    c = g('old'); c.fillStyle='#2b3036'; rr(c,0,0,96,96,21); c.fill();
+    c.fillStyle='#9aa0a6'; c.beginPath(); c.arc(48,36,14,0,7); c.fill();
+    c.beginPath(); c.ellipse(48,88,23,29,0,Math.PI,0); c.fill();
+    c.fillStyle='#4A7B03'; c.fillRect(0,69,96,19);
+    c.fillStyle='#fff'; c.fillRect(25,77,46,3);
+  </script>
+</body>
+</html>

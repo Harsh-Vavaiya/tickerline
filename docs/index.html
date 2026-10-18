@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tickerline — name and contact overlay for Google Meet</title>
+<meta name="description" content="Put your name, role and contact details on your camera in Google Meet. A clean broadcast strip that survives background blur." />
+<style>
+  :root {
+    --ink: #0B0B0D; --ink-2: #15171B; --line: #24272C;
+    --fg: #ECEEF0; --muted: #9AA0A6; --accent: #0A84FF;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--ink); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 22px; }
+  header { padding: 56px 0 10px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark { width: 40px; height: 40px; border-radius: 9px; flex: none; }
+  h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: clamp(30px, 6vw, 42px); line-height: 1.12; letter-spacing: -0.025em; margin: 34px 0 14px; font-weight: 650; }
+  h3 { font-size: 17px; margin: 40px 0 8px; letter-spacing: -0.01em; }
+  p { margin: 0 0 14px; }
+  p.lede { font-size: 18.5px; color: #C9CDD2; }
+  .muted { color: var(--muted); }
+  a { color: var(--accent); }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 8px; }
+  .btn {
+    display: inline-block; padding: 11px 18px; border-radius: 9px; text-decoration: none;
+    font-weight: 600; font-size: 15px; border: 1px solid var(--line); color: var(--fg); background: var(--ink-2);
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { border-color: var(--muted); }
+  .shot { margin: 30px 0 6px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #0f1114; }
+  .shot svg { display: block; width: 100%; height: auto; }
+  ul { padding-left: 18px; margin: 0 0 14px; }
+  li { margin-bottom: 7px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin: 18px 0 8px; }
+  .card { border: 1px solid var(--line); border-radius: 11px; padding: 15px 16px; background: var(--ink-2); }
+  .card b { display: block; margin-bottom: 4px; font-size: 14.5px; }
+  .card span { color: var(--muted); font-size: 14px; }
+  footer { border-top: 1px solid var(--line); margin-top: 56px; padding: 22px 0 60px; color: var(--muted); font-size: 14px; }
+  footer a { margin-right: 16px; }
+  code { background: var(--ink-2); padding: 1px 5px; border-radius: 4px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 128 128" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#17191D"/><stop offset="1" stop-color="#0A0A0C"/>
+      </linearGradient></defs>
+      <rect width="128" height="128" rx="28" fill="url(#g)"/>
+      <rect y="76.8" width="128" height="28.2" fill="#0A84FF"/>
+      <rect x="15" y="86" width="41" height="7" fill="#fff"/>
+      <rect x="66" y="86" width="26" height="7" fill="#fff"/>
+      <rect width="128" height="128" rx="28" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="3"/>
+    </svg>
+    <h1>Tickerline</h1>
+  </div>
+
+  <h2>Your name on your camera,<br />where people actually look.</h2>
+  <p class="lede">
+    Tickerline draws a broadcast-style strip over your own video in Google Meet. Your name and role,
+    a number, a website — so nobody has to squint at a participant label or ask you to drop your
+    details in the chat again.
+  </p>
+
+  <div class="cta">
+    <a class="btn primary" href="#install">Install</a>
+    <a class="btn" href="privacy.html">Privacy</a>
+  </div>
+  <p class="muted" style="font-size:14.5px">Free. No account, no trial, nothing to upgrade to.</p>
+</header>
+
+<div class="shot">
+  <!-- A drawing of the result, not a screenshot: honest about being an illustration. -->
+  <svg viewBox="0 0 760 400" role="img" aria-label="Illustration of a video tile with a Tickerline strip showing an example name and contact details">
+    <defs>
+      <linearGradient id="room" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#5D6773"/><stop offset=".55" stop-color="#8C98A5"/><stop offset="1" stop-color="#4A525C"/>
+      </linearGradient>
+      <linearGradient id="person" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2F3338"/><stop offset="1" stop-color="#1B1E22"/>
+      </linearGradient>
+    </defs>
+    <rect width="760" height="400" fill="url(#room)"/>
+    <rect x="470" y="40" width="190" height="150" fill="rgba(255,255,255,.10)"/>
+    <circle cx="380" cy="186" r="54" fill="url(#person)"/>
+    <ellipse cx="380" cy="410" rx="150" ry="140" fill="url(#person)"/>
+    <g>
+      <rect x="22" y="22" width="716" height="44" rx="22" fill="rgba(11,11,13,.58)"/>
+      <text x="380" y="50" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="20" font-weight="600">Northwind Studio</text>
+    </g>
+    <g>
+      <rect x="22" y="320" width="716" height="44" rx="22" fill="rgba(11,11,13,.58)"/>
+      <text x="380" y="348" text-anchor="middle" fill="#fff" font-family="system-ui, sans-serif" font-size="19" font-weight="500">Alex Rivera · Product Design  ·  +1 555 0100  ·  northwind.example</text>
+    </g>
+  </svg>
+</div>
+<p class="muted" style="font-size:13.5px">Illustration of the result. The strip scrolls, and sits on the frames the call actually receives.</p>
+
+<h3>Why it stays readable when other overlays smear</h3>
+<p>
+  Meet runs your camera through its own background blur before sending it. Anything drawn before that
+  gets blurred along with the background, which is why overlays usually come out muddy.
+</p>
+<p>
+  Tickerline draws <em>after</em> Meet's effects, onto the frames actually being sent. Your text stays
+  crisp over a blurred background. There is no AI model involved, and the cost is under a millisecond
+  per frame.
+</p>
+
+<div class="grid">
+  <div class="card"><b>A real ticker</b><span>Scrolling, static, or rotating between lines.</span></div>
+  <div class="card"><b>Two bars</b><span>Each one movable and resizable.</span></div>
+  <div class="card"><b>Six looks</b><span>Keynote, Studio, Minimal, Editorial, Terminal, Broadcast.</span></div>
+  <div class="card"><b>Your logo</b><span>On its own, or beside your text.</span></div>
+  <div class="card"><b>Your own view matches</b><span>Un-mirrored, so you see what the call sees.</span></div>
+  <div class="card"><b>Nothing leaves your computer</b><span>No server, no network requests, no account.</span></div>
+</div>
+
+<h3 id="install">Install</h3>
+<p>
+  <!-- Replace with the Chrome Web Store link once the listing is live. -->
+  Coming to the Chrome Web Store. Until then you can load it yourself: download the latest
+  <a href="https://github.com/Harsh-Vavaiya/tickerline/releases">release</a>, unzip it, open <code>chrome://extensions</code>, turn on
+  Developer mode, and choose <em>Load unpacked</em>.
+</p>
+
+<h3>Known limits, up front</h3>
+<ul>
+  <li>Chrome and Edge only — it relies on insertable streams.</li>
+  <li>Google Meet only for now.</li>
+  <li>Settings live on the computer you set them up on. There is no sync and no backup file.</li>
+  <li>The “glass” surface is translucency, not a true frosted blur.</li>
+</ul>
+
+<footer>
+  <a href="privacy.html">Privacy</a>
+  <a href="https://github.com/Harsh-Vavaiya/tickerline/issues">Support</a>
+  <a href="https://github.com/Harsh-Vavaiya/tickerline">Source</a>
+  <a href="https://buymeacoffee.com/tickerline">Buy me a coffee</a>
+  <p style="margin-top:14px">Not affiliated with Google. Google Meet is a trademark of Google LLC.</p>
+</footer>
+
+</div>
+</body>
+</html>

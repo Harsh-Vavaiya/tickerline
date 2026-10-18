@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: test
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: ver
+        run: |
+          set -euo pipefail
+          latest_tag=$(git tag --list 'v*.*.*' --sort=-v:refname | head -n1 || true)
+          if [ -z "$latest_tag" ]; then
+            base=$(node -p "require('./extension/manifest.json').version")
+            next="v$base"
+          else
+            ver=${latest_tag#v}
+            major=$(echo "$ver" | cut -d. -f1)
+            minor=$(echo "$ver" | cut -d. -f2)
+            patch=$(echo "$ver" | cut -d. -f3)
+            next="v${major}.${minor}.$((patch + 1))"
+          fi
+          if git rev-parse "$next" >/dev/null 2>&1; then
+            echo "Tag $next already exists, nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "tag=$next" >> "$GITHUB_OUTPUT"
+          echo "version=${next#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build release bundle
+        if: steps.ver.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          rm -rf build
+          cp -r extension build
+          node -e "
+            const fs = require('fs');
+            const p = 'build/manifest.json';
+            const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+            m.version = '${{ steps.ver.outputs.version }}';
+            fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n');
+          "
+          cd build && zip -r "../tickerline-${{ steps.ver.outputs.tag }}.zip" . && cd ..
+
+      - name: Bump repo version and commit
+        if: steps.ver.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          node -e "
+            const fs = require('fs');
+            for (const p of ['extension/manifest.json', 'package.json']) {
+              const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+              m.version = '${{ steps.ver.outputs.version }}';
+              fs.writeFileSync(p, JSON.stringify(m, null, 2) + '\n');
+            }
+          "
+          git add extension/manifest.json package.json
+          git commit -m "chore(release): ${{ steps.ver.outputs.tag }} [skip ci]"
+          git push origin HEAD:main
+
+      - name: Tag release commit
+        if: steps.ver.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          git tag -a "${{ steps.ver.outputs.tag }}" -m "Release ${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+
+      - name: Create GitHub release
+        if: steps.ver.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" \
+            "tickerline-${{ steps.ver.outputs.tag }}.zip" \
+            --title "Tickerline ${{ steps.ver.outputs.tag }}" \
+            --generate-notes

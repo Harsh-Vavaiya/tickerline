@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tickerline templates</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 28px; background: #0c0d0f; color: #e9eaec;
+      font: 14px/1.5 -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { font-size: 19px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+    p.lede { margin: 0 0 24px; color: #9aa0a6; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 22px; }
+    figure { margin: 0; }
+    canvas { width: 100%; display: block; border-radius: 10px; background: #000; }
+    figcaption { margin-top: 8px; display: flex; gap: 8px; align-items: baseline; }
+    .name { font-weight: 600; }
+    .note { color: #9aa0a6; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <h1>Tickerline templates</h1>
+  <p class="lede">Every built-in look, drawn by the real renderer over a stand-in camera frame.</p>
+  <div class="grid" id="grid"></div>
+
+  <script src="../extension/strip.js"></script>
+  <script src="../extension/config.js"></script>
+  <script>
+    const R = window.MeetStrip;
+    const C = window.MeetStripConfig;
+    const W = 960, H = 540;
+
+    const CONTENT = {
+      top: { items: ['Northwind Studio'] },
+      bottom: { items: ['Alex Rivera · Product Design', '+1 555 0100', 'northwind.example'] },
+    };
+
+    // Stand-in for a camera frame: a lit wall, a person, something behind them,
+    // so translucent panels have texture to sit over.
+    function scene(ctx) {
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#5c6672');
+      bg.addColorStop(0.55, '#8d99a6');
+      bg.addColorStop(1, '#4a525c');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.fillRect(W * 0.60, H * 0.10, W * 0.26, H * 0.44);
+      ctx.fillStyle = 'rgba(0,0,0,0.13)';
+      ctx.fillRect(W * 0.06, H * 0.52, W * 0.20, H * 0.48);
+
+      const person = ctx.createLinearGradient(0, H * 0.25, 0, H);
+      person.addColorStop(0, '#2f3338');
+      person.addColorStop(1, '#1b1e22');
+      ctx.fillStyle = person;
+      ctx.beginPath();
+      ctx.arc(W / 2, H * 0.44, H * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(W / 2, H * 1.02, W * 0.21, H * 0.37, 0, Math.PI, 0);
+      ctx.fill();
+    }
+
+    function withContent(cfg) {
+      const out = JSON.parse(JSON.stringify(cfg));
+      out.top = Object.assign({}, out.top, CONTENT.top);
+      out.bottom = Object.assign({}, out.bottom, CONTENT.bottom);
+      return R.normalize(out);
+    }
+
+    const canvases = [];
+    for (const tpl of C.TEMPLATES) {
+      const fig = document.createElement('figure');
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const cap = document.createElement('figcaption');
+      cap.innerHTML = `<span class="name">${tpl.name}</span><span class="note">${tpl.note}</span>`;
+      fig.append(canvas, cap);
+      document.getElementById('grid').appendChild(fig);
+      canvases.push({ ctx: canvas.getContext('2d'), cfg: withContent(tpl.cfg) });
+    }
+
+    function frame() {
+      const now = Date.now();
+      for (const c of canvases) {
+        scene(c.ctx);
+        R.draw(c.ctx, W, H, c.cfg, null, now);
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tickerline benchmark</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 26px; background: #0c0d0f; color: #e9eaec;
+      font: 13px/1.5 -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    }
+    h1 { font-size: 18px; margin: 0 0 2px; letter-spacing: -0.01em; }
+    h2 { font-size: 14px; margin: 26px 0 8px; color: #cdd2d6; }
+    p.lede { margin: 0 0 18px; color: #9aa0a6; }
+    table { border-collapse: collapse; width: 100%; max-width: 1180px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid #23262a; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: #9aa0a6; font-weight: 500; font-size: 12px; }
+    .ok { color: #8cc63f; }
+    .warn { color: #e8b21a; }
+    .bad { color: #ff6b5e; }
+    #status { color: #9aa0a6; margin: 10px 0 0; }
+    code { color: #cdd2d6; }
+  </style>
+</head>
+<body>
+  <h1>Tickerline benchmark</h1>
+  <p class="lede">Renderer cost per frame, measured with the real draw path. Budget at 30fps is 33.3ms per frame for everything Meet does; the strip should be a rounding error against that.</p>
+  <div id="out"></div>
+  <p id="status">Running…</p>
+
+  <script src="../extension/strip.js"></script>
+  <script src="../extension/config.js"></script>
+  <script>
+    const R = window.MeetStrip;
+    const C = window.MeetStripConfig;
+    const results = { renderer: [], composite: [], stress: [], leak: null, meta: {} };
+
+    const LONG = 'Northwind Studio Incorporated · Product Design Division';
+    const CONTENT = {
+      top: { items: ['Northwind Studio'] },
+      bottom: { items: ['Alex Rivera · Product Design', '+1 555 0100', 'northwind.example'] },
+    };
+
+    function makeCanvas(w, h) {
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      return c;
+    }
+
+    // A stand-in camera frame, drawn once and reused as a blit source.
+    function sourceFrame(w, h) {
+      const c = makeCanvas(w, h);
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#5c6672'); g.addColorStop(1, '#434a54');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#2f3338';
+      ctx.beginPath(); ctx.arc(w / 2, h * 0.45, h * 0.14, 0, Math.PI * 2); ctx.fill();
+      return c;
+    }
+
+    function stats(samples) {
+      const s = samples.slice().sort((a, b) => a - b);
+      const sum = s.reduce((a, b) => a + b, 0);
+      return {
+        mean: sum / s.length,
+        p50: s[Math.floor(s.length * 0.5)],
+        p95: s[Math.floor(s.length * 0.95)],
+        max: s[s.length - 1],
+      };
+    }
+
+    // Time one call repeatedly. nowMs advances so the marquee really moves and
+    // rotate really switches, rather than redrawing one cached frame.
+    function bench(fn, iterations) {
+      for (let i = 0; i < 60; i++) fn(i * 16.7); // warm up
+      const samples = [];
+      for (let i = 0; i < iterations; i++) {
+        const t = performance.now();
+        fn(i * 16.7);
+        samples.push(performance.now() - t);
+      }
+      return stats(samples);
+    }
+
+    function withContent(cfg, content) {
+      const out = JSON.parse(JSON.stringify(cfg));
+      out.top = Object.assign({}, out.top, content.top);
+      out.bottom = Object.assign({}, out.bottom, content.bottom);
+      return R.normalize(out);
+    }
+
+    function row(table, cells, cls) {
+      const tr = document.createElement('tr');
+      for (const c of cells) {
+        const td = document.createElement('td');
+        td.textContent = c;
+        if (cls) td.className = cls;
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+
+    function table(title, headers) {
+      const h = document.createElement('h2');
+      h.textContent = title;
+      const t = document.createElement('table');
+      const tr = document.createElement('tr');
+      for (const head of headers) {
+        const th = document.createElement('th');
+        th.textContent = head;
+        tr.appendChild(th);
+      }
+      t.appendChild(tr);
+      document.getElementById('out').append(h, t);
+      return t;
+    }
+
+    function verdict(ms) {
+      // 30fps budget is 33.3ms for the whole pipeline; flag anything that eats
+      // a meaningful slice of it.
+      if (ms < 1) return 'ok';
+      if (ms < 3) return 'warn';
+      return 'bad';
+    }
+
+    function fmt(n) { return n.toFixed(3); }
+
+    async function run() {
+      const SIZES = [[1280, 720], [1920, 1080]];
+      const ITER = 400;
+
+      // 1. Renderer only, every template, at each resolution.
+      const t1 = table('Renderer only — R.draw() onto a prepared frame', [
+        'Template', 'Resolution', 'mean ms', 'p50', 'p95', 'max', '% of 30fps frame',
+      ]);
+      for (const tpl of C.TEMPLATES) {
+        for (const [w, h] of SIZES) {
+          const canvas = makeCanvas(w, h);
+          const ctx = canvas.getContext('2d', { alpha: false });
+          const cfg = withContent(tpl.cfg, CONTENT);
+          const s = bench((now) => R.draw(ctx, w, h, cfg, null, now), ITER);
+          const pct = (s.mean / 33.3) * 100;
+          results.renderer.push({ template: tpl.id, w, h, ...s });
+          row(t1, [tpl.name, `${w}×${h}`, fmt(s.mean), fmt(s.p50), fmt(s.p95), fmt(s.max), pct.toFixed(2) + '%'], verdict(s.mean));
+        }
+      }
+
+      // 2. What inject.js actually does per frame: blit the camera frame, then draw.
+      const t2 = table('Full per-frame path — blit camera frame + draw strip', [
+        'Scenario', 'Resolution', 'mean ms', 'p50', 'p95', 'max', 'headroom at 30fps',
+      ]);
+      for (const [w, h] of SIZES) {
+        const src = sourceFrame(w, h);
+        const canvas = makeCanvas(w, h);
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const cfg = withContent(C.templateById('keynote').cfg, CONTENT);
+        const blit = bench(() => ctx.drawImage(src, 0, 0, w, h), ITER);
+        const both = bench((now) => { ctx.drawImage(src, 0, 0, w, h); R.draw(ctx, w, h, cfg, null, now); }, ITER);
+        results.composite.push({ w, h, blit: blit.mean, both: both.mean, strip: both.mean - blit.mean });
+        row(t2, ['blit only (baseline)', `${w}×${h}`, fmt(blit.mean), fmt(blit.p50), fmt(blit.p95), fmt(blit.max), ''], verdict(blit.mean));
+        row(t2, ['blit + strip', `${w}×${h}`, fmt(both.mean), fmt(both.p50), fmt(both.p95), fmt(both.max),
+          (33.3 / both.mean).toFixed(0) + '× budget'], verdict(both.mean));
+      }
+
+      // 3. Deliberately hostile configurations.
+      const STRESS = [
+        {
+          name: '8 long items, both bars scrolling fast',
+          size: [1280, 720],
+          cfg: {
+            top: { mode: 'scroll', speed: 400, items: Array(8).fill(LONG) },
+            bottom: { mode: 'scroll', speed: 400, items: Array(8).fill(LONG) },
+          },
+        },
+        {
+          name: 'mono + uppercase + max tracking',
+          size: [1280, 720],
+          cfg: {
+            top: { mode: 'scroll', font: 'mono', uppercase: true, tracking: 0.4, items: [LONG] },
+            bottom: { mode: 'scroll', font: 'mono', uppercase: true, tracking: 0.4, items: [LONG] },
+          },
+        },
+        {
+          name: 'oversized bars (40% height each)',
+          size: [1280, 720],
+          cfg: { top: { heightPct: 40, yPct: 0 }, bottom: { heightPct: 40, yPct: 60 } },
+        },
+        {
+          name: 'text shrink-to-fit on a narrow bar',
+          size: [1280, 720],
+          cfg: {
+            top: { mode: 'static', widthPct: 10, items: [LONG] },
+            bottom: { mode: 'rotate', widthPct: 10, items: [LONG, LONG + '!', LONG + '!!'] },
+          },
+        },
+        { name: '4K frame', size: [3840, 2160], cfg: {} },
+        { name: 'tiny frame (320×180)', size: [320, 180], cfg: {} },
+      ];
+      const t3 = table('Stress — deliberately hostile settings', [
+        'Scenario', 'Resolution', 'mean ms', 'p50', 'p95', 'max', '% of 30fps frame',
+      ]);
+      for (const s of STRESS) {
+        const [w, h] = s.size;
+        const canvas = makeCanvas(w, h);
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const base = withContent(C.templateById('keynote').cfg, CONTENT);
+        const cfg = R.normalize(Object.assign({}, base, {
+          top: Object.assign({}, base.top, s.cfg.top),
+          bottom: Object.assign({}, base.bottom, s.cfg.bottom),
+        }));
+        const r = bench((now) => R.draw(ctx, w, h, cfg, null, now), 250);
+        results.stress.push({ name: s.name, w, h, ...r });
+        row(t3, [s.name, `${w}×${h}`, fmt(r.mean), fmt(r.p50), fmt(r.p95), fmt(r.max), ((r.mean / 33.3) * 100).toFixed(2) + '%'], verdict(r.mean));
+      }
+
+      // 4. Cache churn: ever-changing text defeats the measure/fit caches, which
+      //    are the only thing in the renderer that grows. Watch the heap.
+      const t4 = table('Leak probe — 20,000 draws with never-repeating text', [
+        'Metric', 'Value',
+      ]);
+      const canvas = makeCanvas(1280, 720);
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const mem0 = performance.memory ? performance.memory.usedJSHeapSize : null;
+      const t0 = performance.now();
+      for (let i = 0; i < 20000; i++) {
+        const cfg = R.normalize({
+          top: { mode: 'static', items: ['Company ' + i] },
+          bottom: { mode: 'scroll', items: ['Line ' + i, 'Other ' + i] },
+        });
+        R.draw(ctx, 1280, 720, cfg, null, i * 16.7);
+      }
+      const elapsed = performance.now() - t0;
+      const mem1 = performance.memory ? performance.memory.usedJSHeapSize : null;
+      results.leak = { draws: 20000, elapsedMs: elapsed, perDrawMs: elapsed / 20000, mem0, mem1 };
+      row(t4, ['draws', '20,000']);
+      row(t4, ['total time', elapsed.toFixed(0) + ' ms']);
+      row(t4, ['per draw (incl. normalize)', (elapsed / 20000).toFixed(3) + ' ms']);
+      if (mem0 != null) {
+        const grewMb = (mem1 - mem0) / 1048576;
+        row(t4, ['heap before', (mem0 / 1048576).toFixed(1) + ' MB']);
+        row(t4, ['heap after', (mem1 / 1048576).toFixed(1) + ' MB']);
+        row(t4, ['growth', grewMb.toFixed(1) + ' MB'], grewMb < 12 ? 'ok' : 'bad');
+      } else {
+        row(t4, ['heap', 'performance.memory unavailable']);
+      }
+
+      results.meta = {
+        ua: navigator.userAgent,
+        cores: navigator.hardwareConcurrency,
+        dpr: devicePixelRatio,
+      };
+      document.getElementById('status').textContent = 'Done.';
+      console.log('[bench] ' + JSON.stringify(results));
+    }
+
+    run();
+  </script>
+</body>
+</html>

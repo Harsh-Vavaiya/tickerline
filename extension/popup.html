@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Tickerline</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1d1f20;
+      --muted: #6a6f73;
+      --line: #e3e5e7;
+      --field: #f5f6f7;
+      --accent: #4a7b03;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1c1e20; --fg: #eceeef; --muted: #9aa0a5; --line: #2f3336; --field: #26292c; --accent: #8cc63f; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; width: 380px; background: var(--bg); color: var(--fg); font: 13px/1.45 "Segoe UI", Roboto, system-ui, sans-serif; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; border-bottom: 1px solid var(--line); }
+    h1 { font-size: 15px; font-weight: 600; margin: 0; }
+    h1 small { font-weight: 500; color: var(--muted); font-size: 11px; margin-left: 6px; }
+    .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted); }
+    .switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .track { width: 34px; height: 20px; border-radius: 10px; background: var(--line); position: relative; transition: background .15s; }
+    .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+    .switch input:checked + .track { background: var(--accent); }
+    .switch input:checked + .track::after { transform: translateX(14px); }
+    .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .preview { padding: 12px 14px 4px; }
+    canvas { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; display: block; background: #2b3036; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .caption { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+    section { padding: 10px 14px; border-top: 1px solid var(--line); }
+    section h2 { font-size: 12px; font-weight: 600; margin: 0 0 8px; display: flex; align-items: center; justify-content: space-between; }
+    label.field { display: block; margin-bottom: 8px; color: var(--muted); font-size: 12px; }
+    label.field > span { display: block; margin-bottom: 3px; }
+    input[type=text], input[type=number], textarea, select { width: 100%; padding: 6px 8px; border: 1px solid var(--line); background: var(--field); color: var(--fg); border-radius: 6px; font: inherit; }
+    textarea { resize: vertical; min-height: 54px; }
+    input[type=color] { width: 36px; height: 26px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: none; cursor: pointer; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    input[type=checkbox] { accent-color: var(--accent); }
+    .inline { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 400; }
+    .btn { padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--fg); font: inherit; cursor: pointer; }
+    .btn:hover { border-color: var(--muted); }
+    .logo-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .thumb { height: 26px; max-width: 90px; object-fit: contain; border-radius: 4px; background: var(--field); display: none; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+    .slider { display: grid; grid-template-columns: 54px 1fr 38px; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+    .slider output { text-align: right; font-variant-numeric: tabular-nums; }
+    footer { padding: 10px 14px 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; }
+    kbd { font: 11px ui-monospace, monospace; padding: 1px 4px; border: 1px solid var(--line); border-radius: 4px; }
+    .support-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; min-height: 20px; }
+    .support { color: var(--accent); text-decoration: none; font-weight: 600; white-space: nowrap; }
+    .support:hover { text-decoration: underline; }
+    #cfgStatus { font-size: 11.5px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tickerline</h1>
+    <label class="switch" title="Turn the strip on or off">
+      <span id="stateLabel">On</span>
+      <input type="checkbox" id="enabled" checked />
+      <span class="track"></span>
+    </label>
+  </header>
+
+  <div class="preview">
+    <canvas id="preview" width="640" height="360" aria-label="Preview of what others see"></canvas>
+    <div class="row caption">
+      <span>What the call sees</span>
+      <label class="inline"><input type="checkbox" id="guides" checked /> Crop guides</label>
+    </div>
+  </div>
+
+  <section>
+    <h2>Look</h2>
+    <label class="field">
+      <span>Template</span>
+      <select id="templateList"></select>
+    </label>
+    <div class="caption" id="templateNote" style="margin:-4px 0 8px"></div>
+    <div class="grid2">
+      <label class="field"><span>Panel color</span><input type="color" id="color" /></label>
+      <label class="field"><span>Text color</span><input type="color" id="textColor" /></label>
+    </div>
+    <label class="field"><span>Accent</span><input type="color" id="accent" /></label>
+    <div class="slider">
+      <span>Opacity</span><input type="range" id="opacity" min="30" max="100" step="1" /><output id="opacityVal"></output>
+    </div>
+    <label class="inline"><input type="checkbox" id="unmirror" /> Un-mirror my own view (others are unaffected)</label>
+  </section>
+
+  <section>
+    <h2>Top strip <label class="inline"><input type="checkbox" id="topEnabled" /> Show</label></h2>
+    <label class="field"><span>Lines, one per line</span><textarea id="topItems" rows="2"></textarea></label>
+    <div class="grid2">
+      <label class="field"><span>Motion</span>
+        <select id="topMode">
+          <option value="static">Static</option>
+          <option value="rotate">Rotate</option>
+          <option value="scroll">Scroll</option>
+        </select>
+      </label>
+      <label class="field"><span id="topRateLabel">Seconds per item</span><input type="number" id="topRate" min="1.5" max="30" step="0.5" /></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>Panel</span>
+        <select id="topShape"><option value="pill">Pill</option><option value="full">Full width</option></select>
+      </label>
+      <label class="field"><span>Surface</span>
+        <select id="topFill">
+          <option value="glass">Glass</option><option value="gradient">Gradient</option>
+          <option value="solid">Solid</option><option value="none">None</option>
+        </select>
+      </label>
+      <label class="field"><span>Typeface</span>
+        <select id="topFont">
+          <option value="display">Display</option><option value="text">Text</option>
+          <option value="mono">Mono</option><option value="serif">Serif</option>
+        </select>
+      </label>
+      <label class="field"><span>Weight</span>
+        <select id="topWeight">
+          <option value="300">Light</option><option value="400">Regular</option>
+          <option value="500">Medium</option><option value="600">Semibold</option>
+          <option value="700">Bold</option>
+        </select>
+      </label>
+    </div>
+    <div class="slider"><span>Tracking</span><input type="range" id="topTracking" min="-5" max="40" step="1" /><output id="topTrackingVal"></output></div>
+    <div class="row" style="margin-bottom:6px">
+      <label class="inline"><input type="checkbox" id="topUppercase" /> Uppercase</label>
+      <label class="inline"><input type="checkbox" id="topShadow" /> Shadow</label>
+      <label class="inline"><input type="checkbox" id="topDivider" /> Accent rule</label>
+    </div>
+    <div class="slider"><span>X</span><input type="range" id="topX" min="0" max="100" step="1" /><output id="topXVal"></output></div>
+    <div class="slider"><span>Y</span><input type="range" id="topY" min="0" max="100" step="1" /><output id="topYVal"></output></div>
+    <div class="slider"><span>Width</span><input type="range" id="topW" min="10" max="100" step="1" /><output id="topWVal"></output></div>
+    <div class="slider"><span>Height</span><input type="range" id="topH" min="4" max="40" step="1" /><output id="topHVal"></output></div>
+    <div class="logo-row">
+      <button class="btn" id="pickLogo" type="button">Choose logo</button>
+      <img class="thumb" id="logoThumb" alt="Logo preview" />
+      <button class="btn" id="clearLogo" type="button" hidden>Remove</button>
+      <input type="file" id="logoFile" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden />
+    </div>
+  </section>
+
+  <section>
+    <h2>Bottom strip <label class="inline"><input type="checkbox" id="bottomEnabled" /> Show</label></h2>
+    <label class="field"><span>Lines, one per line</span><textarea id="bottomItems" rows="3"></textarea></label>
+    <div class="grid2">
+      <label class="field"><span>Motion</span>
+        <select id="bottomMode">
+          <option value="static">Static</option>
+          <option value="rotate">Rotate</option>
+          <option value="scroll">Scroll</option>
+        </select>
+      </label>
+      <label class="field"><span id="bottomRateLabel">Speed (px/s)</span><input type="number" id="bottomRate" min="10" max="400" step="5" /></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>Panel</span>
+        <select id="bottomShape"><option value="pill">Pill</option><option value="full">Full width</option></select>
+      </label>
+      <label class="field"><span>Surface</span>
+        <select id="bottomFill">
+          <option value="glass">Glass</option><option value="gradient">Gradient</option>
+          <option value="solid">Solid</option><option value="none">None</option>
+        </select>
+      </label>
+      <label class="field"><span>Typeface</span>
+        <select id="bottomFont">
+          <option value="display">Display</option><option value="text">Text</option>
+          <option value="mono">Mono</option><option value="serif">Serif</option>
+        </select>
+      </label>
+      <label class="field"><span>Weight</span>
+        <select id="bottomWeight">
+          <option value="300">Light</option><option value="400">Regular</option>
+          <option value="500">Medium</option><option value="600">Semibold</option>
+          <option value="700">Bold</option>
+        </select>
+      </label>
+    </div>
+    <div class="slider"><span>Tracking</span><input type="range" id="bottomTracking" min="-5" max="40" step="1" /><output id="bottomTrackingVal"></output></div>
+    <div class="row" style="margin-bottom:6px">
+      <label class="inline"><input type="checkbox" id="bottomUppercase" /> Uppercase</label>
+      <label class="inline"><input type="checkbox" id="bottomShadow" /> Shadow</label>
+      <label class="inline"><input type="checkbox" id="bottomDivider" /> Accent rule</label>
+    </div>
+    <div class="slider"><span>X</span><input type="range" id="bottomX" min="0" max="100" step="1" /><output id="bottomXVal"></output></div>
+    <div class="slider"><span>Y</span><input type="range" id="bottomY" min="0" max="100" step="1" /><output id="bottomYVal"></output></div>
+    <div class="slider"><span>Width</span><input type="range" id="bottomW" min="10" max="100" step="1" /><output id="bottomWVal"></output></div>
+    <div class="slider"><span>Height</span><input type="range" id="bottomH" min="4" max="40" step="1" /><output id="bottomHVal"></output></div>
+  </section>
+
+  <footer>
+    <div><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> toggles the strip during a call. Changes apply live. If Meet was open before you installed this, reload that tab once.</div>
+    <div class="support-row">
+      <span id="cfgStatus" role="status" aria-live="polite"></span>
+      <a id="support" class="support" target="_blank" rel="noopener noreferrer" hidden>Buy me a coffee</a>
+    </div>
+  </footer>
+
+  <script src="strip.js"></script>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
