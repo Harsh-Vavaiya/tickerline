@@ -6,7 +6,7 @@
    * Tip jar. The link hides itself if this is ever blanked out, so the popup
    * cannot ship a dead link.
    */
-  const SUPPORT_URL = 'https://buymeacoffee.com/tickerline';
+  const SUPPORT_URL = 'https://buymeacoffee.com/harshv9';
 
   const R = window.MeetStrip;
   const C = window.MeetStripConfig;
