@@ -1,6 +1,6 @@
 # Tickerline — Privacy Policy
 
-Last updated: 17 October 2026
+Last updated: 19 October 2026
 
 Tickerline is a Chrome extension that draws a text and logo strip over your own
 camera video in Google Meet.
@@ -54,9 +54,3 @@ with a new date at the top.
 ## Contact
 
 Questions or problems: open an issue at <https://github.com/Harsh-Vavaiya/tickerline/issues>.
-
-<!--
-  Fill this in before publishing. It pointed at the GitHub repository's issue
-  tracker, which is private, so nobody reading this policy could have used it.
-  A privacy policy has to carry an address that actually reaches you.
--->
