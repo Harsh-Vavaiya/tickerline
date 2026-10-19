@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tickerline — Name & Contact Overlay for Google Meet",
   "short_name": "Tickerline",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Put your name, role and contact details on your camera in Google Meet. A clean broadcast strip that survives background blur.",
   "permissions": [
     "storage"
