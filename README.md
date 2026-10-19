@@ -1,5 +1,7 @@
 # Tickerline
 
+**Website: [harsh-vavaiya.github.io/tickerline](https://harsh-vavaiya.github.io/tickerline/)** · [Download the latest release](https://github.com/Harsh-Vavaiya/tickerline/releases/latest) · [Privacy policy](https://harsh-vavaiya.github.io/tickerline/privacy.html)
+
 A news-style strip (logo and contact details) for your camera in Google Meet. Two things in here:
 
 - `extension/` is a Chrome extension that puts a news-style strip (logo + company on top, rotating contact details at the bottom) on your camera in Google Meet. No model, just drawing.
