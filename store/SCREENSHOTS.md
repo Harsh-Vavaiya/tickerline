@@ -138,17 +138,23 @@ comparison is like for like.
 2. In Chrome open <http://localhost:8777/lab/>.
 3. When Chrome asks for the camera, click the camera icon in the address bar and
    choose **OBS Virtual Camera**.
-4. Choose the **Segmentation** pipeline and wait for the model to download, a
+4. Make the strip match shot 1. In the lab's panel set **Strip color** to
+   `#0B0B0D` (the Keynote panel colour; click the swatch, then type it), and put
+   the same words in **Top text** and **Bottom items** as in your popup. The lab
+   starts on the old green, which would make this shot look like a different
+   product.
+5. Choose the **Segmentation** pipeline and wait for the model to download, a
    few seconds.
-5. Tick **Simulate Meet's own blur (strip drawn first)**. Snip the video. This is
+6. Tick **Simulate Meet's own blur (strip drawn first)**. Snip the video. This is
    the **before**.
-6. Untick it. Snip the video again. This is the **after**.
-7. Composer: switch to **Split: before | after**, press **Clear**, then paste the
+7. Untick it. Snip the video again. This is the **after**.
+8. Composer: switch to **Split: before | after**, press **Clear**, then paste the
    before image, then the after image. The caption fills in as
    `Survives Meet's background blur.`
 
-I have not been able to run the lab since the renderer was rewritten. If it
-misbehaves, use this instead: in the viewer window, snip a closer rectangle
+The lab's model downloads and its use of the renderer were checked after the
+renderer rewrite, but it has not been run end to end since. If it misbehaves,
+use this instead: in the viewer window, snip a closer rectangle
 around the lower half of the presenter's tile, so the sharp strip edge against
 the blurred room is the whole picture. Composer, single image, caption
 `Stays sharp over Meet's background blur.`
