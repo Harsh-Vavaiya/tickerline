@@ -21,30 +21,40 @@ Meet's background blur works by finding a person in the frame, so the camera
 feed needs a person in it. OBS feeds a video file to Meet as if it were your
 webcam.
 
-### 1.1 Get a clip
+### 1.1 Get a photo
 
-1. Go to <https://www.pexels.com/videos/>.
-2. Search **person working at laptop** or **person video call**.
-3. Pick a clip where someone faces the camera, upper body in frame, in a room
-   with some depth behind them (shelves, a window). Plain white walls make the
-   blur invisible.
-4. Click **Free download**, choose a **1920×1080** size, save it somewhere you
-   will find it.
+Screenshots are stills, so a still photo works as the camera just as well as a
+video: Meet's blur runs on every frame, and the strip still renders and scrolls
+on top of it. Photos are far easier to find than suitable video.
 
-Pexels allows commercial use without attribution. A store listing is
-promotional, though, and an identifiable person can read as endorsing the
-product. If you can get a friend or colleague to record a 20-second clip
-instead, that is the better choice; the steps below are the same either way.
+1. Go to <https://unsplash.com/s/photos/video-call-portrait>.
+2. Pick a **landscape** photo where someone faces the camera, upper body in
+   frame, with a room behind them (shelves, a window, a plant). Plain white
+   walls make the blur invisible.
+3. Use one with a plain **Download** button. A **lock** icon means Unsplash+,
+   which is paid.
+4. Download the largest size offered.
+
+Other searches that work on the same site: `person on video call`,
+`webcam portrait`, `remote work portrait`.
+
+The Unsplash licence allows commercial use. A store listing is promotional,
+though, and an identifiable person can read as endorsing the product. A photo
+of a friend who agrees to it is the better choice if you can get one; the steps
+below are the same either way.
 
 ### 1.2 Set up OBS
 
 1. Open **OBS Studio**.
-2. In the **Sources** panel at the bottom, click **+** → **Media Source** → name
-   it `Camera` → **OK**.
-3. Click **Browse**, pick the clip. Tick **Loop**. Click **OK**.
-4. Click the clip in the preview so it is selected, then press `Ctrl`+`F` to fit
-   it to the canvas.
+2. In the **Sources** panel at the bottom, click **+** → **Image** → name it
+   `Camera` → **OK**.
+3. Click **Browse**, pick the photo, click **OK**.
+4. Click the photo in the preview so it is selected, then press `Ctrl`+`F` to
+   fit it to the canvas.
 5. In the **Controls** panel at the bottom right, click **Start Virtual Camera**.
+
+(If you do find a video clip, use **Media Source** instead of **Image** in step 2
+and tick **Loop**. Everything else is the same.)
 
 Leave OBS open until every screenshot is done.
 
@@ -194,8 +204,8 @@ Your tile is the only one carrying a strip. Everyone else is a name.
 
 1. In OBS click **Stop Virtual Camera**.
 2. Stop the server with `Ctrl`+`C` in its terminal.
-3. Switch Meet's camera back to your real webcam, or the next call will show the
-   stock clip.
+3. Switch Meet's camera back to your real webcam, or your next real call will
+   show the stock photo.
 
 Before uploading, open each of the five files and check:
 
