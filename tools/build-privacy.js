@@ -29,6 +29,7 @@ function inline(t) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2">$1</a>')
     .replace(/&lt;(https?:\/\/[^&\s]+)&gt;/g, '<a href="$1">$1</a>')
+    .replace(/&lt;([^&\s@]+@[^&\s@]+\.[a-z]{2,})&gt;/gi, '<a href="mailto:$1">$1</a>')
     .replace(/\u0000(\d+)\u0000/g, (_, i) => code[Number(i)]);
 }
 

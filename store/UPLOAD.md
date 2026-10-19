@@ -23,9 +23,14 @@ it in. Allow about 30 minutes, then a review that usually takes a few days.
    separate from work.
 3. Accept the developer agreement and pay the one-time registration fee. The
    amount is shown at checkout.
-4. If asked about **trader status**, read the definitions carefully. It governs
-   EU consumer-law disclosures; a free extension with an optional tip jar is a
-   question to answer honestly rather than one with an obvious answer.
+4. **Account** page → contact email `harshvavaiya@gmail.com` → request verification → click
+   the link the store emails you. Publishing is blocked until this is done, and
+   this address is shown publicly on the listing.
+5. If asked about **trader status**, read the definitions carefully, and know
+   what each answer publishes: declaring yourself a **trader** means your legal
+   name, phone number and address are shown to EU users. A free extension with an
+   optional tip jar is a question to answer honestly rather than one with an
+   obvious answer.
 
 ## Step 2 — Upload the package
 

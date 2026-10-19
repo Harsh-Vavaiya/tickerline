@@ -53,4 +53,5 @@ with a new date at the top.
 
 ## Contact
 
-Questions or problems: open an issue at <https://github.com/Harsh-Vavaiya/tickerline/issues>.
+Questions or problems: email <harshvavaiya@gmail.com>, or open an issue at
+<https://github.com/Harsh-Vavaiya/tickerline/issues>.

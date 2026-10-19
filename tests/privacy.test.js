@@ -24,6 +24,7 @@ describe('hosted privacy policy', () => {
   });
 
   it('gives readers a working way to reach the developer', () => {
+    expect(html).toMatch(/<a href="mailto:harshvavaiya@gmail\.com">/);
     expect(html).toMatch(/<a href="https:\/\/github\.com\/Harsh-Vavaiya\/tickerline\/issues">/);
   });
 
@@ -50,6 +51,12 @@ describe('renderPrivacy', () => {
     );
     expect(renderPrivacy('see <https://example.com/x>.')).toContain(
       '<a href="https://example.com/x">https://example.com/x</a>'
+    );
+  });
+
+  it('turns a bracketed email address into a mailto link', () => {
+    expect(renderPrivacy('email <someone@example.com>.')).toContain(
+      '<a href="mailto:someone@example.com">someone@example.com</a>'
     );
   });
 
