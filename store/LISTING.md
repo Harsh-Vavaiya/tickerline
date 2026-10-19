@@ -98,7 +98,7 @@ KNOWN LIMITS, UP FRONT
 
 Free, with no account, no trial and nothing to upgrade to. If it saves you
 repeating your details on a call, you can buy me a coffee:
-https://buymeacoffee.com/harshv9
+https://buymeacoffee.com/hrpatelishd
 
 Source, and somewhere to report a problem: https://github.com/Harsh-Vavaiya/tickerline
 ```
