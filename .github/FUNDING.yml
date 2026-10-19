@@ -1,0 +1,6 @@
+# Puts a "Sponsor" button at the top of the repository, next to Watch and Fork.
+# Buy Me a Coffee allows one page per account, so this points at the personal
+# page rather than a Tickerline-branded one; the repository around it supplies
+# the project context.
+buy_me_a_coffee: harshv9
+custom: ["https://harsh-vavaiya.github.io/tickerline/"]
