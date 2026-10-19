@@ -328,7 +328,7 @@
     roundRect(ctx, inset, inset, bw, bh, bh / 2);
     ctx.fill();
 
-    ctx.fillStyle = on ? '#8CC63F' : '#9AA0A5';
+    ctx.fillStyle = on ? '#0A84FF' : '#9AA0A5';
     ctx.beginPath();
     ctx.arc(inset + padX + dot / 2, inset + bh / 2, dot / 2, 0, Math.PI * 2);
     ctx.fill();

@@ -1,3 +1,7 @@
 node_modules/
 build/
 *.zip
+
+# Store screenshots: uploaded to the Chrome Web Store, not published here.
+# They show personal details and come from real calls.
+store/[0-9]-*.png
