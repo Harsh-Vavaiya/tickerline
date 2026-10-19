@@ -16,6 +16,11 @@ Tickerline — Name & Contact Overlay for Google Meet
 on the right. Store search reads this field, so the keywords belong here rather
 than in the brand itself.
 
+**This is not typed into the dashboard.** The store title is the `name` field in
+`extension/manifest.json`, and the dashboard cannot change it after upload; a new
+title means a new version. It is already set. `short_name` keeps it to
+"Tickerline" where space is tight.
+
 ## Summary / short description (max 132 characters)
 
 ```
@@ -95,6 +100,9 @@ KNOWN LIMITS, UP FRONT
   do not support yet.
 • Google Meet only for now.
 • The "glass" surface is translucency, not a true frosted blur.
+
+Tickerline is not affiliated with or endorsed by Google. Google Meet is a
+trademark of Google LLC.
 
 Free, with no account, no trial and nothing to upgrade to. If it saves you
 repeating your details on a call, you can buy me a coffee:

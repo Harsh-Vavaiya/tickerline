@@ -12,6 +12,23 @@ describe('manifest.json', () => {
     expect(manifest.manifest_version).toBe(3);
   });
 
+  // The store takes its title and summary straight from these fields and the
+  // dashboard cannot edit them after upload, so they are checked here instead.
+  it('has a store title within the 75 character limit, leading with the brand', () => {
+    expect(manifest.name.length).toBeLessThanOrEqual(75);
+    expect(manifest.name.startsWith('Tickerline')).toBe(true);
+  });
+
+  it('has a short name within the 12 character limit', () => {
+    expect(manifest.short_name).toBe('Tickerline');
+    expect(manifest.short_name.length).toBeLessThanOrEqual(12);
+  });
+
+  it('has a store summary within the 132 character limit', () => {
+    expect(manifest.description.length).toBeGreaterThan(0);
+    expect(manifest.description.length).toBeLessThanOrEqual(132);
+  });
+
   it('has a well-formed semver version', () => {
     expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
