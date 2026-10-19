@@ -21,7 +21,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -79,8 +79,14 @@ jobs:
             }
           "
           git add extension/manifest.json package.json
-          git commit -m "chore(release): ${{ steps.ver.outputs.tag }} [skip ci]"
-          git push origin HEAD:main
+          # With no tags yet, the version is taken from manifest.json itself, so
+          # there is nothing to bump. That is not an error; carry on and tag.
+          if git diff --cached --quiet; then
+            echo "Already at ${{ steps.ver.outputs.version }}, nothing to bump."
+          else
+            git commit -m "chore(release): ${{ steps.ver.outputs.tag }} [skip ci]"
+            git push origin HEAD:main
+          fi
 
       - name: Tag release commit
         if: steps.ver.outputs.skip == 'false'
