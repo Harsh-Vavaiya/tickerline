@@ -190,6 +190,9 @@ Caption: `The one they remember after the call.`
 Use `store/screenshot-frame.html` to compose each one: drop in a raw capture, it
 scales to exactly 1280×800 and burns in the caption.
 
+**`store/SCREENSHOTS.md` is the full capture guide**, including how to shoot
+without putting your own face in the listing.
+
 ### Shooting notes
 
 - Use real content, not "Your Company". A real name and a real-looking number
