@@ -23,7 +23,7 @@ it in. Allow about 30 minutes, then a review that usually takes a few days.
    separate from work.
 3. Accept the developer agreement and pay the one-time registration fee. The
    amount is shown at checkout.
-4. **Account** page → contact email `harshvavaiya@gmail.com` → request verification → click
+4. **Account** page → contact email `harshvavaiya+tickerline@gmail.com` → request verification → click
    the link the store emails you. Publishing is blocked until this is done, and
    this address is shown publicly on the listing.
 5. If asked about **trader status**, read the definitions carefully, and know

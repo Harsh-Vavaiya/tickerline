@@ -108,13 +108,13 @@ Free, with no account, no trial and nothing to upgrade to. If it saves you
 repeating your details on a call, you can buy me a coffee:
 https://buymeacoffee.com/hrpatelishd
 
-Questions or problems: harshvavaiya@gmail.com
+Questions or problems: harshvavaiya+tickerline@gmail.com
 Source and issue tracker: https://github.com/Harsh-Vavaiya/tickerline
 ```
 
 ### Contact fields in the dashboard
 
-- **Contact email** (Account page, not the listing): `harshvavaiya@gmail.com`. The store
+- **Contact email** (Account page, not the listing): `harshvavaiya+tickerline@gmail.com`. The store
   requires it to be verified, and shows it publicly in the listing's contact
   section.
 - **Homepage URL**: `https://harsh-vavaiya.github.io/tickerline/`

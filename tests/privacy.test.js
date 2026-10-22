@@ -24,7 +24,7 @@ describe('hosted privacy policy', () => {
   });
 
   it('gives readers a working way to reach the developer', () => {
-    expect(html).toMatch(/<a href="mailto:harshvavaiya@gmail\.com">/);
+    expect(html).toMatch(/<a href="mailto:harshvavaiya\+tickerline@gmail\.com">/);
     expect(html).toMatch(/<a href="https:\/\/github\.com\/Harsh-Vavaiya\/tickerline\/issues">/);
   });
 
