@@ -1,6 +1,6 @@
 {
   "name": "tickerline",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "private": true,
   "description": "Chrome extension: news-style strip for Google Meet",
   "type": "module",
