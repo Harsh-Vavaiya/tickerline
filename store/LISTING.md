@@ -32,10 +32,11 @@ cannot do.
 
 ## Category
 
-`Productivity` → `Workflow & Planning`
+`Communication`
 
-Communication is the obvious choice and the wrong one: it is dominated by
-messaging clients and the browsing intent there is different.
+The dashboard offers one flat list. Tickerline only does anything on a video
+call, which is what Communication covers; `Workflow & Planning` is the fallback
+if it ever needs moving. The category can be changed later without a new upload.
 
 ## Language
 
